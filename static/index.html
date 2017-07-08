@@ -1,0 +1,180 @@
+<!-- Gets location using HTML, cals WS to find closest works location, -->
+<!-- displays info in text and on OSM map -->
+<!-- It uses bootstrap framework for UI to scale it for multi device use-->
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Utili Co Works Checker</title>
+<meta charset="utf-8">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+ <!-- Latest compiled and minified CSS for bootstrap -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<!-- Latest compiled bootstrap JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<!-- OpenLayers 4 for mapping -->
+<script src="https://openlayers.org/en/v4.2.0/build/ol.js" type="text/javascript"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+<style>
+	div.map {
+	width:100%;
+	}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="panel panel-default" panel-modest>
+    <div class="panel-heading"><h3>Utili-Co Works Finder</h3></div>
+      <div class="panel-body">
+        <p>Click to check if there are Utili-Co works in your area.</p>
+        <button type="button" class="btn btn-default" onclick="getLocation()"> Find local works </button>
+        <p id="works"></p>
+      <div class="map" id="worksMap"></div>
+    </div>
+  </div>
+</div>
+</body>
+
+<script>
+var x = document.getElementById("works");
+
+// This function is called when the button is pressed and uses
+// HTML feature to obtain position
+// Passes findPosition function as parameter to be called when position is found
+function getLocation() {
+	x.innerHTML = "Just a sec ... please allow access to location information when requested";
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(findPosition);
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+
+//Function is called by HTML geolocation and calls web service to find closest
+//works location and description
+function findPosition(position) {
+     x.innerHTML = "You are at: " + position.coords.latitude.toFixed(5) +
+    ", " + position.coords.longitude.toFixed(5) + "<br> ";
+
+	var lon = position.coords.longitude;
+	var lat = position.coords.latitude;
+
+  //Build url to invoke web service - relative path assumes they are running
+  //from same server
+  var worksUrl = "/api/works/" + lat + "," + lon;
+
+  //Asynch web service calls showPosition when result is received
+  $.ajax({
+    xhrFields: {cors: false},
+    type: 'GET',
+    url: worksUrl,
+    success: function(data) {
+      showPosition(true, lat, lon, data.distance, data.works ,data.lat, data.lon);
+    },
+    error: function(err) {
+      showPosition(false, lat, lon);
+    }
+  });
+}
+
+// Called by jQuery when a response is received
+function showPosition(found, lat, lon, distance, wrkDescr ,latWrk, lonWrk) {
+  // Display text with distance, descritption & location
+	if (found) {
+    x.innerHTML = x.innerHTML + "<br> The closest works are " +
+                  Math.round(distance) + " meters away: " + wrkDescr ;
+    x.innerHTML = x.innerHTML + "<br>At: " + latWrk +
+                  ", " + lonWrk ;
+  }
+
+	if (!found) {
+		x.innerHTML = x.innerHTML + "<br>No works found at your location.";
+	}
+
+	// Resize target div height
+	var winHeight = $(window).height() / 2;
+	$("#worksMap").height(winHeight);
+
+	// Create map
+	document.getElementById("worksMap").innerHTML = "";
+	//var map = new ol.Map({target: 'worksMap'});
+	//map.addLayer(new Tile({source: new ol.source.OSM()}));
+	var proj4326 = new ol.proj.Projection("EPSG:4326");
+	var projmerc = new ol.proj.Projection("EPSG:900913");
+
+	//calculate user location to centre map and add pin
+	//var lonlat = new ol.proj.fromLonLat(lon, lat);
+  var lonlat = ol.proj.fromLonLat([lon,lat]);
+  var lonlatWrk = ol.proj.fromLonLat([lonWrk,latWrk]);
+
+  var pinFeature = new ol.Feature({
+          geometry: new ol.geom.Point(lonlat),
+          name: 'Current position'
+        });
+  var pinStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          anchor: [0.5, 0.5],
+          size: [50,50],
+          offset: [0,0],
+          opacity: 1,
+          scale: 0.6,
+          src: 'static/images/pin.png'
+        })
+      });
+  pinFeature.setStyle(pinStyle);
+
+  var worksFeature = new ol.Feature({
+      geometry: new ol.geom.Point(lonlatWrk),
+      name: 'Works position'
+      });
+  var worksStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          anchor: [0.5, 0.5],
+          size: [150,150],
+          offset: [0,0],
+          opacity: 1,
+          scale: 0.4,
+          src: 'static/images/Under-construction.png'
+          })
+      });
+  worksFeature.setStyle(worksStyle);
+
+  var vectorSource = new ol.source.Vector({
+        features: [pinFeature, worksFeature]
+      });
+
+  var vectorLayer = new ol.layer.Vector({
+        source: vectorSource
+      });
+
+  var zoomLev = 19;
+  if (distance >= 25) { zoomLev = 17;}
+  if (distance >= 50) { zoomLev = 15;}
+  if (distance >= 200) { zoomLev = 14;}
+  if (distance >= 1000) { zoomLev = 12;}
+
+  var map = new ol.Map({
+        target: 'worksMap',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM()
+          }),
+          vectorLayer
+        ],
+        view: new ol.View({
+          center: (lonlat),
+          zoom: zoomLev
+        })
+      });
+}
+
+</script>
+
+</html>

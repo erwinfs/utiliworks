@@ -6,7 +6,7 @@ import swiftclient
 import urllib.request
 
 #Specify filename and container name to get file out of Object Storage
-file_nameSrc = "data/works.txt"
+file_nameSrc = "works_src.txt"
 file_name = "works.txt"
 cont_name = "works"
 

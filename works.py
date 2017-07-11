@@ -27,22 +27,23 @@ import math
 import csv
 import json
 import swiftclient
+import cfg
 
 #Specify filename and container name to get file out of Object Storage
 file_name = "works.txt"
 cont_name = "works"
 
 #Credentials for object storage
-auth_url = "https://lon-identity.open.softlayer.com/v3"
-project = "object_storage_1b885008_464c_43d5_9dc1_fbe603a79525"
-project_id =  "4a9ca921887640639289c818531bd517"
-region= "london"
-user_id= "e1a1ab03073d4fa3ba8ee2d68be42f5a"
-username= "admin_5127cf3f164c4012f377599cb658584de59aca5c"
-password= "I!=dt-BPf3.^6fCg"
-domainId= "6543fe3416ae4d13b26c96ac415e0535"
-domainName= "1390751"
-role= "admin"
+auth_url = cfg.auth_url
+project = cfg.project
+project_id =  cfg.project_id
+region= cfg.region
+user_id= cfg.user_id
+username= cfg.username
+password= cfg.password
+domainId= cfg.domainId
+domainName= cfg.domainName
+role= cfg.role
 
 def toRadians(d):
     r = d * math.pi / 180.0

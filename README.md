@@ -8,9 +8,12 @@ The Python script upload.py is used to copy the file to a bluemix object store (
 
 ## Run the app locally
 
+1. Ensure that you have access to a cloud object storage service
+1. Upload a file called works.txt - you can use the upload.py script yo do this
 1. [Install Python][]
 1. cd into this project's root directory
 1. Run `pip install -r requirements.txt` to install the app's dependencies
+1. Rename rename_to-cfg.py to cfg.py and add Cloud Object Storage credentials
 1. Run `python works.py'
 1. Access the running app in a browser at <http://localhost:5000>
 
